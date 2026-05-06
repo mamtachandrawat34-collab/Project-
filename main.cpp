@@ -22,7 +22,6 @@ int score = 0;
 int solvedWordsInLevel = 0;
 
 const int wordsPerLevel = 5;
-const float timePerWord = 10.0f;
 
 bool isTyping = false;
 bool answerCorrect = false;
@@ -123,9 +122,6 @@ int main() {
     // ---------------- LOAD FIRST WORD ----------------
     loadCurrentWord(rng);
 
-    // ---------------- TIMER ----------------
-    sf::Clock wordClock;
-
     // ---------------- COLORS ----------------
     sf::Color bgColor(20, 28, 45);
     sf::Color topPanelColor(255, 255, 255);      // white title box
@@ -163,29 +159,6 @@ int main() {
     sf::Text progressText(font, "", 24);
     progressText.setPosition({430.f, 135.f});
     progressText.setFillColor(sf::Color::White);
-
-    // ---------------- SMALL WATCH ICON ----------------
-    sf::CircleShape watchCircle(14.f);
-    watchCircle.setPosition({72.f, 182.f});
-    watchCircle.setFillColor(sf::Color::Transparent);
-    watchCircle.setOutlineThickness(3.f);
-    watchCircle.setOutlineColor(sf::Color::White);
-
-    sf::RectangleShape watchTop({6.f, 5.f});
-    watchTop.setPosition({84.f, 176.f});
-    watchTop.setFillColor(sf::Color::White);
-
-    sf::RectangleShape watchHand1({2.f, 9.f});
-    watchHand1.setPosition({85.f, 188.f});
-    watchHand1.setFillColor(sf::Color::White);
-
-    sf::RectangleShape watchHand2({8.f, 2.f});
-    watchHand2.setPosition({85.f, 195.f});
-    watchHand2.setFillColor(sf::Color::White);
-
-    sf::Text timerText(font, "", 22);
-    timerText.setPosition({110.f, 182.f});
-    timerText.setFillColor(sf::Color::White);
 
     // ---------------- PROGRESS BAR ----------------
     sf::RectangleShape progressBarBack({320.f, 18.f});
@@ -327,22 +300,28 @@ int main() {
                             loadCurrentWord(rng);
                             inputBox.setOutlineColor(sf::Color::White);
                             message.setString("");
-                            wordClock.restart();
                         }
                     }
                 }
 
                 if (levelCompleted && !gameCompleted) {
                     if (nextLevelButton.getGlobalBounds().contains(mousePos)) {
-                        currentLevel++;
-                        solvedWordsInLevel = 0;
-                        levelCompleted = false;
-                        levelFailed = false;
+                        int totalLevels = (words.size() + wordsPerLevel - 1) / wordsPerLevel;
 
-                        loadCurrentWord(rng);
-                        inputBox.setOutlineColor(sf::Color::White);
-                        message.setString("");
-                        wordClock.restart();
+                        if (currentLevel >= totalLevels) {
+                            // ---------------- ALL LEVELS COMPLETED ----------------
+                            gameCompleted = true;
+                            message.setString("");
+                        } else {
+                            currentLevel++;
+                            solvedWordsInLevel = 0;
+                            levelCompleted = false;
+                            levelFailed = false;
+
+                            loadCurrentWord(rng);
+                            inputBox.setOutlineColor(sf::Color::White);
+                            message.setString("");
+                        }
                     }
                 }
 
@@ -357,7 +336,6 @@ int main() {
                         loadCurrentWord(rng);
                         inputBox.setOutlineColor(sf::Color::White);
                         message.setString("");
-                        wordClock.restart();
                     }
                 }
             }
@@ -377,23 +355,6 @@ int main() {
 
                     inputText.setString(userInput);
                 }
-            }
-        }
-
-        // ---------------- TIMER LOGIC ----------------
-        float timeLeft = timePerWord - wordClock.getElapsedTime().asSeconds();
-
-        if (timeLeft < 0) {
-            timeLeft = 0;
-        }
-
-        if (!answerCorrect && !levelCompleted && !gameCompleted && !levelFailed) {
-            if (timeLeft <= 0) {
-                levelFailed = true;
-                isTyping = false;
-                inputBox.setOutlineColor(errorColor);
-                message.setString("Time Up! Reattempt Level " + to_string(currentLevel));
-                message.setFillColor(errorColor);
             }
         }
 
@@ -428,7 +389,6 @@ int main() {
         levelText.setString("Level: " + to_string(currentLevel) + "/" + to_string(totalLevels));
         scoreText.setString("Score: " + to_string(score));
         progressText.setString("Words Cleared: " + to_string(solvedWordsInLevel) + "/5");
-        timerText.setString("Time Left: " + to_string((int)timeLeft) + " sec");
 
         float progressWidth = (320.0f * solvedWordsInLevel) / 5.0f;
         progressBarFill.setSize({progressWidth, 18.f});
@@ -453,13 +413,6 @@ int main() {
         window.draw(progressText);
         window.draw(progressBarBack);
         window.draw(progressBarFill);
-
-        // timer under level
-        window.draw(watchCircle);
-        window.draw(watchTop);
-        window.draw(watchHand1);
-        window.draw(watchHand2);
-        window.draw(timerText);
 
         window.draw(instruction);
         window.draw(wordCard);
